@@ -1,0 +1,17 @@
+2022-12-21 15:56:52,876 | __main__ | WARNING | No student number (nan) for nan nan on line 16842 so omitting
+2022-12-21 15:56:54,811 | __main__ | WARNING | No student number (nan) for nan nan on line 27563 so omitting
+2022-12-21 15:56:55,461 | __main__ | WARNING | No student number (nan) for nan nan on line 31470 so omitting
+2022-12-21 15:56:57,826 | __main__ | INFO | Found 1461 unique students in dtems file
+2022-12-21 15:56:58,136 | __main__ | INFO | Successfully obtained a new token
+2022-12-21 15:56:58,722 | __main__ | INFO | Response 200
+2022-12-21 15:56:58,723 | __main__ | INFO | Successful Response
+2022-12-21 15:56:58,732 | __main__ | INFO | iSAMS: 	 1440
+2022-12-21 15:57:54,678 | __main__ | WARNING | No student number (nan) for nan nan on line 16842 so omitting
+2022-12-21 15:57:56,358 | __main__ | WARNING | No student number (nan) for nan nan on line 27563 so omitting
+2022-12-21 15:57:57,025 | __main__ | WARNING | No student number (nan) for nan nan on line 31470 so omitting
+2022-12-21 15:57:59,522 | __main__ | INFO | Found 1461 unique students in dtems file
+2022-12-21 15:57:59,523 | __main__ | INFO | DTEMS: 	 1461
+2022-12-21 15:57:59,753 | __main__ | INFO | Successfully obtained a new token
+2022-12-21 15:58:00,351 | __main__ | INFO | Response 200
+2022-12-21 15:58:00,351 | __main__ | INFO | Successful Response
+2022-12-21 15:58:00,360 | __main__ | INFO | iSAMS: 	 1440

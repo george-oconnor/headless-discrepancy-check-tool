@@ -1,3 +1,4 @@
 *.log
 /logs
 dtems_details.csv
+/__pycache__

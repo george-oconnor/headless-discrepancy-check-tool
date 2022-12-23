@@ -1,7 +1,8 @@
 from sharepoint_stuff import getCTX, downloadFile
 from email_stuff import unattended_send_email as send_email
 from office365.sharepoint.client_context import ClientContext
-from datetime import datetime
+from datetime import datetime, date
+from time import time
 import pandas as pd
 import keyring, os, shutil, math, requests, sys, json, logging
 
@@ -32,6 +33,7 @@ def getAuth() -> tuple[ClientContext, str, str, str, str, str]:
     except Exception as e:
         logger.error("Failed to get ctx")
         logger.error(e, exc_info=True)
+        sys.exit()
 
     api_key = keyring.get_password("discrep_check", "students_api_key")
     try:
@@ -40,12 +42,12 @@ def getAuth() -> tuple[ClientContext, str, str, str, str, str]:
     except Exception as e:
         logger.error("Failed to get api key")
         logger.error(e, exc_info=True)
+        sys.exit()
 
     auth_server_url = keyring.get_password("discrep_check", "auth_server_url")
     client_id = keyring.get_password("discrep_check", "client_id")
     client_secret = keyring.get_password("discrep_check", "client_secret")
 
-    checkCredential("sharepoint_url", sharepoint_url)
     checkCredential("auth_server_url", auth_server_url)
     checkCredential("client id", client_id)
     checkCredential("client_secret", client_secret)
@@ -200,15 +202,21 @@ def compareData(dtems_li:list[dict], isams_li:list[dict]) -> list[list[str, str,
 
     return on_dtems_but_not_isams_li, on_isams_but_not_dtems_li
 
-def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtems_li:list[dict], dtems_df:pd.DataFrame, dtems_num:int, isams_num:int, verbose:bool=False) -> None:
+def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtems_li:list[dict], dtems_df:pd.DataFrame, dtems_num:int, isams_num:int, start_time:datetime, verbose:bool=False) -> None:
     
     if verbose == True: student_details = getStudentDetails(on_dtems_but_not_isams_li, dtems_df, False)
-    
+    now = datetime.now()
+    today = date.today()
+    current_time = now.strftime("%H:%M:%S")
+    time_taken = "{0:.2f}".format(time() - start_time)
+    time_string =  f"Ran attendance check at {current_time} on {today} on computer {os.environ['COMPUTERNAME']} in {time_taken} seconds"
+    logger.info(time_string)
     body = f"""
     <html>
     <head></head>
     <body>
-        <h1>DTEMS: {dtems_num} iSAMS: {isams_num}</h1>
+        <h1>DTEMS: {dtems_num} iSAMS: {isams_num}</h1><br></br>
+        <p>{time_string}<br></br></p>
         <h2>Found {len(on_dtems_but_not_isams_li)} students on dtems but not on isams:</h2>
         <ul>
     """
@@ -275,6 +283,7 @@ def getStudentDetails(on_dtems_but_not_isams_li:list[dict], df:pd.DataFrame, sta
     return body
 
 def main() -> None:
+    start_time = time()
     ctx, api_url, auth_server_url, client_id, client_secret = getAuth()
 
     tempPath = "./.temp/"
@@ -288,7 +297,7 @@ def main() -> None:
 
     on_dtems_but_not_isams_li, on_isams_but_not_dtems_li = compareData(dtems_students, isams_students)
 
-    sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, dtems_num, isams_num, verbose=True)
+    sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, dtems_num, isams_num, start_time, verbose=True)
 
     shutil.rmtree(tempPath)
 

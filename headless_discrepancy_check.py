@@ -52,9 +52,7 @@ def getAuth() -> tuple[ClientContext, str, str, str, str, str]:
 
     return ctx, api_url, auth_server_url, client_id, client_secret
 
-def getDTEMSData(ctx:ClientContext, tempPath:str) -> list[dict]:
-    student_li, student_dict_li = [], []
-    dtems_filename = "dtems_details.csv"
+def getDTEMSDataframe(ctx:ClientContext, tempPath:str, dtems_filename:str) -> pd.DataFrame:
     try:
         downloadFile(ctx, "/sites/AttendanceTest/Shared%20Documents/dtems_ft_data/FT_ClassDetails.csv", dtems_filename, tempPath)
         logger.debug("Got dtems datafile from sharepoint")
@@ -66,25 +64,41 @@ def getDTEMSData(ctx:ClientContext, tempPath:str) -> list[dict]:
     try:
         df = pd.read_csv(tempPath+dtems_filename, header=0, encoding="latin-1")
         logger.debug("Read dtems datafile into dataframe")
+        return df
     except Exception as e:
         logger.error("Failed to read dtems datafile into dataframe")
         logger.error(e, exc_info=True)
-    
-    for i in range(0, len(df.index)):
-        try:
-            first_name = df.iloc[i, 6]
-            last_name = df.iloc[i, 7]
-            student_num = df.iloc[i, 8]
-        except Exception as e:
-            logger.error(f"Failed to get all data for student {first_name} {last_name} ({student_num}) on line {i}")
-            logger.error(e, exc_info=True)
-            return 0
+        return 0
 
-        if math.isnan(student_num):
-            logger.warning(f"No student number ({student_num}) for {first_name} {last_name} on line {i} so omitting")
+def getDTEMSData(ctx:ClientContext, tempPath:str) -> list[dict]:
+    student_li, student_dict_li = [], []
+
+    df = getDTEMSDataframe(ctx, tempPath, "dtems_details.csv")
+
+    lunch_cls_grp_ids = [5774, 5839, 5743]
+
+    for index, row in df.iterrows():
+        if row[1] in lunch_cls_grp_ids:
+            logger.debug(f"Removed row {index} : {row[1]} {row[2]} {row[3]} {row[4]} because it is a lunch class")
+            df.drop(index, inplace=True)
+        elif "nan" in [str(row[0]), str(row[1]), str(row[2]), str(row[6]), str(row[7]), str(row[8])]:
+            logger.warning(f"Removed row {index} : {row[1]} {row[2]} {row[3]} {row[4]} because of empty fields")
+            df.drop(index, inplace=True)
         else:
-            student_string = str(first_name) + "_" + str(last_name) + "_" + str(int(student_num))
-            student_li.append(student_string)
+            try:
+                first_name = row[6]
+                last_name = row[7]
+                student_num = row[8]
+            except Exception as e:
+                logger.error(f"Failed to get all data for student {first_name} {last_name} ({student_num}) on line {index}")
+                logger.error(e, exc_info=True)
+                return 0
+
+            if math.isnan(student_num):
+                logger.warning(f"No student number ({student_num}) for {first_name} {last_name} on line {index} so omitting")
+            else:
+                student_string = str(first_name) + "_" + str(last_name) + "_" + str(int(student_num))
+                student_li.append(student_string)
 
     logger.debug(f"Found {len(student_li)} student details in dtems file")
     unique_student_li = list(dict.fromkeys(student_li))
@@ -102,7 +116,7 @@ def getDTEMSData(ctx:ClientContext, tempPath:str) -> list[dict]:
         unique_student_dict_li.append(student_dict)
 
     logger.info(f"DTEMS: \t {len(unique_student_dict_li)}")
-    return unique_student_dict_li
+    return unique_student_dict_li, df
 
 def get_new_token(auth_server_url:str, client_id:str, client_secret:str) -> str:
     """returns the isams access token as a string"""
@@ -186,21 +200,25 @@ def compareData(dtems_li:list[dict], isams_li:list[dict]) -> list[list[str, str,
 
     return on_dtems_but_not_isams_li, on_isams_but_not_dtems_li
 
-def sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li):
+def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtems_li:list[dict], dtems_df:pd.DataFrame, dtems_num:int, isams_num:int, verbose:bool=False) -> None:
+    
+    if verbose == True: student_details = getStudentDetails(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, False)
+    
     body = f"""
     <html>
     <head></head>
     <body>
+        <h1>DTEMS: {dtems_num} iSAMS: {isams_num}</h1>
         <h2>Found {len(on_dtems_but_not_isams_li)} students on dtems but not on isams:</h2>
         <ul>
     """
     for student in on_dtems_but_not_isams_li:
         body += f"<li>  {student['firstname']} {student['lastname']} ({student['student_id']})</li>"
     
-    body += f"""    
+    body += f"""
         </ul>
         <p>\n</p>
-        <h2>Found {len(on_isams_but_not_dtems_li)} student on isams but not on dtems:</h2>
+        <h2>Found {len(on_isams_but_not_dtems_li)} students on isams but not on dtems:</h2>
         <ul>
     """
     for student in on_isams_but_not_dtems_li:
@@ -208,6 +226,12 @@ def sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li):
 
     body += """
         </ul>
+        <p>\n</p>
+    """
+
+    if verbose == True: body += student_details
+
+    body += """
     </body>
     </html>
     """
@@ -217,6 +241,39 @@ def sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li):
 
     send_email("Discrepancy Check Results", body, "none", username, password, "goconnor@instituteofeducation.ie")
 
+def getStudentDetails(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtems_li:list[dict], df:pd.DataFrame, standalone:bool=True) -> str:
+    #df = getDTEMSDataframe(ctx, tempPath, "FT_ClassDetails.csv")
+
+    body = ""
+    row_count = 0
+
+    def check(li:list[dict], body:str, row_count:int) -> tuple[str, int]:
+        for student in li:
+            body += f"<h4>{student['firstname']} {student['lastname']}</h4><ul>"
+            for index, row in df.iterrows():
+                #print(index, row)
+                missing_student_num = int(student['student_id'])
+                student_num = int(row[8])
+
+                if missing_student_num == student_num:
+                    details = f"{int(row[1])} {int(row[2])} - {student_num} - {row[6]} {row[7]}"
+                    body += f"<li> {details} </li>"
+                    row_count += 1
+                    
+            body += "</ul>"
+
+        return body, row_count
+
+    if standalone == True: body += "<html><head></head><body>"
+    body += "<h2>On DTEMS but not on iSAMS:</h2>"
+    body, row_count = check(on_dtems_but_not_isams_li, body, row_count)
+    if standalone == True: body += "</body></html>"
+
+    username = keyring.get_password("attendance_sharepoint", "username")
+    password = keyring.get_password("attendance_sharepoint", username)
+
+    if row_count > 0 and standalone == True: send_email("Discrepancy Details Results", body, "none", username, password, "goconnor@instituteofeducation.ie")
+    return body
 
 def main() -> None:
     ctx, api_url, auth_server_url, client_id, client_secret = getAuth()
@@ -224,12 +281,15 @@ def main() -> None:
     tempPath = "./.temp/"
     os.makedirs(tempPath, exist_ok=True)
 
-    dtems_students = getDTEMSData(ctx, tempPath)
+    dtems_students, dtems_df = getDTEMSData(ctx, tempPath)
     isams_students = getListOfStudents(auth_server_url, client_id, client_secret, api_url)
+
+    dtems_num = len(dtems_students)
+    isams_num = len(isams_students)
 
     on_dtems_but_not_isams_li, on_isams_but_not_dtems_li = compareData(dtems_students, isams_students)
 
-    sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li)
+    sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, dtems_num, isams_num, verbose=True)
 
     shutil.rmtree(tempPath)
 

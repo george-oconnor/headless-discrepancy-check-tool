@@ -202,7 +202,7 @@ def compareData(dtems_li:list[dict], isams_li:list[dict]) -> list[list[str, str,
 
 def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtems_li:list[dict], dtems_df:pd.DataFrame, dtems_num:int, isams_num:int, verbose:bool=False) -> None:
     
-    if verbose == True: student_details = getStudentDetails(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, False)
+    if verbose == True: student_details = getStudentDetails(on_dtems_but_not_isams_li, dtems_df, False)
     
     body = f"""
     <html>
@@ -241,7 +241,7 @@ def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtem
 
     send_email("Discrepancy Check Results", body, "none", username, password, "goconnor@instituteofeducation.ie")
 
-def getStudentDetails(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtems_li:list[dict], df:pd.DataFrame, standalone:bool=True) -> str:
+def getStudentDetails(on_dtems_but_not_isams_li:list[dict], df:pd.DataFrame, standalone:bool=True) -> str:
     #df = getDTEMSDataframe(ctx, tempPath, "FT_ClassDetails.csv")
 
     body = ""
@@ -251,7 +251,6 @@ def getStudentDetails(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dte
         for student in li:
             body += f"<h4>{student['firstname']} {student['lastname']}</h4><ul>"
             for index, row in df.iterrows():
-                #print(index, row)
                 missing_student_num = int(student['student_id'])
                 student_num = int(row[8])
 

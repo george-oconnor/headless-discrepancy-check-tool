@@ -217,7 +217,7 @@ def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtem
     <body>
         <h1>DTEMS: {dtems_num} iSAMS: {isams_num}</h1><br></br>
         <p>{time_string}<br></br></p>
-        <h2>Found {len(on_dtems_but_not_isams_li)} students on dtems but not on isams:</h2>
+        <h2>Found {len(on_dtems_but_not_isams_li)} students on DTEMS but not on iSAMS:</h2>
         <ul>
     """
     for student in on_dtems_but_not_isams_li:
@@ -226,7 +226,7 @@ def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtem
     body += f"""
         </ul>
         <p>\n</p>
-        <h2>Found {len(on_isams_but_not_dtems_li)} students on isams but not on dtems:</h2>
+        <h2>Found {len(on_isams_but_not_dtems_li)} students on iSAMS but not on DTEMS:</h2>
         <ul>
     """
     for student in on_isams_but_not_dtems_li:

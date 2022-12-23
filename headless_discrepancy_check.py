@@ -297,7 +297,7 @@ def main() -> None:
 
     on_dtems_but_not_isams_li, on_isams_but_not_dtems_li = compareData(dtems_students, isams_students)
 
-    sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, dtems_num, isams_num, start_time, verbose=True)
+    sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, dtems_num, isams_num, start_time, verbose=False)
 
     shutil.rmtree(tempPath)
 

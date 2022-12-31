@@ -1,5 +1,5 @@
 from sharepoint_stuff import getCTX, downloadFile
-from email_stuff import unattended_send_email as send_email
+from ioe_email_stuff import send_email
 from office365.sharepoint.client_context import ClientContext
 from datetime import datetime, date
 from time import time
@@ -247,7 +247,7 @@ def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtem
     username = keyring.get_password("attendance_sharepoint", "username")
     password = keyring.get_password("attendance_sharepoint", username)
 
-    send_email("Discrepancy Check Results", body, "none", username, password, "goconnor@instituteofeducation.ie")
+    send_email("Discrepancy Check Results", body, username, password, "goconnor@instituteofeducation.ie")
 
 def getStudentDetails(on_dtems_but_not_isams_li:list[dict], df:pd.DataFrame, standalone:bool=True) -> str:
     #df = getDTEMSDataframe(ctx, tempPath, "FT_ClassDetails.csv")
@@ -279,7 +279,7 @@ def getStudentDetails(on_dtems_but_not_isams_li:list[dict], df:pd.DataFrame, sta
     username = keyring.get_password("attendance_sharepoint", "username")
     password = keyring.get_password("attendance_sharepoint", username)
 
-    if row_count > 0 and standalone == True: send_email("Discrepancy Details Results", body, "none", username, password, "goconnor@instituteofeducation.ie")
+    if row_count > 0 and standalone == True: send_email("Discrepancy Details Results", body, username, password, "goconnor@instituteofeducation.ie")
     return body
 
 def main() -> None:

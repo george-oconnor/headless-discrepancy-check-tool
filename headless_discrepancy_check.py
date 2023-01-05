@@ -77,7 +77,8 @@ def getDTEMSData(ctx:ClientContext, tempPath:str) -> list[dict]:
 
     df = getDTEMSDataframe(ctx, tempPath, "dtems_details.csv")
 
-    lunch_cls_grp_ids = [5774, 5839, 5743]
+    #lunch_cls_grp_ids = [5774, 5839, 5743]
+    lunch_cls_grp_ids = []
 
     for index, row in df.iterrows():
         if row[1] in lunch_cls_grp_ids:
@@ -225,7 +226,7 @@ def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtem
     
     body += f"""
         </ul>
-        <p>\n</p>
+        <br>
         <h2>Found {len(on_isams_but_not_dtems_li)} students on iSAMS but not on DTEMS:</h2>
         <ul>
     """
@@ -234,7 +235,8 @@ def sendResultsEmail(on_dtems_but_not_isams_li:list[dict], on_isams_but_not_dtem
 
     body += """
         </ul>
-        <p>\n</p>
+        <br>
+        <h3>Please be aware that if a student does not have any classes on their timetable they will not show up in the DTEMS check.</h3>
     """
 
     if verbose == True: body += student_details

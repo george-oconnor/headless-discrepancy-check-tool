@@ -36,11 +36,15 @@ def getAuth() -> tuple[ClientContext, str, str, str, str, str]:
         sys.exit()
 
     api_key = keyring.get_password("discrep_check", "students_api_key")
+    api_base_url = keyring.get_password("discrep_check", "isams-api-base-url")
+    api_type = "batch"
+    api_version = "1.0"
+    api_results_type = "json.ashx"
     try:
-        api_url="https://ioe.isams.cloud/api/batch/1.0/json.ashx?apiKey=" + api_key
+        api_url = api_base_url + "/" + api_type + "/" + api_version + "/" + api_results_type + "?apiKey=" + api_key
         logger.debug("Got api key")
     except Exception as e:
-        logger.error("Failed to get api key")
+        logger.error("Failed to get api key and url")
         logger.error(e, exc_info=True)
         sys.exit()
 

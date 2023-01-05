@@ -42,7 +42,7 @@ def getAuth() -> tuple[ClientContext, str, str, str, str, str]:
     api_results_type = "json.ashx"
     try:
         api_url = api_base_url + "/" + api_type + "/" + api_version + "/" + api_results_type + "?apiKey=" + api_key
-        logger.debug("Got api key")
+        logger.debug("Got api key and url")
     except Exception as e:
         logger.error("Failed to get api key and url")
         logger.error(e, exc_info=True)

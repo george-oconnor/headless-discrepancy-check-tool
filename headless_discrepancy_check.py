@@ -302,8 +302,10 @@ def main() -> None:
     isams_num = len(isams_students)
 
     on_dtems_but_not_isams_li, on_isams_but_not_dtems_li = compareData(dtems_students, isams_students)
-
-    sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, dtems_num, isams_num, start_time, verbose=False)
+    if dtems_num != isams_num:
+        sendResultsEmail(on_dtems_but_not_isams_li, on_isams_but_not_dtems_li, dtems_df, dtems_num, isams_num, start_time, verbose=False)
+    else:
+        logger.warning("Didn't send email: no discrepancy")
 
     shutil.rmtree(tempPath)
 
